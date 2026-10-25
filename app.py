@@ -9,7 +9,7 @@ client = OpenAI(
     base_url="https://api.deepseek.com",
 )
 
-SYSTEM_PROMPT = "You are a helpful assistant."
+SYSTEM_PROMPT = "You are a helpful assistant"
 
 
 @app.route("/")
