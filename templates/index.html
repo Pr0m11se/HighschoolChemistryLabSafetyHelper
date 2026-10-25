@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI 对话</title>
+</head>
+<body>
+
+  <div id="chat-body" style="height: 400px; overflow-y: auto; border: 1px solid #ccc;">
+    <div>AI：你好！有什么可以帮你的吗？</div>
+  </div>
+
+  <div>
+    <textarea id="user-input" rows="3" cols="60"
+              placeholder="输入消息，Enter 发送，Shift+Enter 换行"></textarea>
+    <button id="send-btn">发送</button>
+  </div>
+  <script>
+    const chatBody = document.getElementById('chat-body');
+    const inputEl  = document.getElementById('user-input');
+    const sendBtn  = document.getElementById('send-btn');
+
+    function appendMessage(who, text) {
+      const line = document.createElement('div');
+      line.textContent = who + '：' + text;
+      chatBody.appendChild(line);
+
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      inputEl.value = '';
+      appendMessage('我', text);
+
+      try {
+        const res  = await fetch('/chat', {
+          method : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body   : JSON.stringify({ message: text }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.reply) {
+          appendMessage('AI', data.reply);
+        } else {
+          appendMessage('AI', '出错:' + (data.error || '请求失败'));
+        }
+      } catch (err) {
+        appendMessage('AI', '网络错误:' + err.message);
+      }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>
