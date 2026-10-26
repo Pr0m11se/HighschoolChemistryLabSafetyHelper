@@ -106,8 +106,8 @@ def chat():
             stream = client.chat.completions.create(
                 model="deepseek-flash",
                 messages=messages,
-                max_tokens=1024,
-                temperature=0.7,
+                max_tokens=2048,
+                temperature=0.85,
                 stream=True,
             )
             for chunk in stream:
@@ -158,4 +158,4 @@ def reload_prompt():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True, threaded=True)
+    app.run(host="0.0.0.0", port=5000, debug=False, threaded=True)
