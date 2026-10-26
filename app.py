@@ -1,6 +1,7 @@
 import os
 import json
-from flask import Flask, render_template, request, jsonify
+from flask import Flask,render_template,request,jsonify,Response,stream_with_context
+
 from openai import OpenAI
 
 app = Flask(__name__)
@@ -66,6 +67,10 @@ def save_history(history):
         print("[WARN] 保存历史失败:", e)
 
 
+def sse(payload):
+    return "data: " + json.dumps(payload, ensure_ascii=False) + "\n\n"
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -95,27 +100,54 @@ def chat():
     messages.extend(history)
     messages.append({"role": "user", "content": user_message})
 
-    try:
-        response = client.chat.completions.create(
-            model="deepseek-flash",
-            messages=messages,
-            max_tokens=1024,
-            temperature=0.7,
-            stream=False,
-        )
-        reply = response.choices[0].message.content
-    except Exception as e:
-        return jsonify({"error": f"调用模型失败：{str(e)}"}), 500
+    def generate():
+        full_reply = ""
+        try:
+            stream = client.chat.completions.create(
+                model="deepseek-flash",
+                messages=messages,
+                max_tokens=1024,
+                temperature=0.7,
+                stream=True,
+            )
+            for chunk in stream:
+                if not getattr(chunk, "choices", None):
+                    continue
+                delta = getattr(chunk.choices[0], "delta", None)
+                content = getattr(delta, "content", None) if delta else None
+                if content:
+                    full_reply += content
+                    yield sse({"delta": content})
+        except Exception as e:
+            yield sse({"error": f"调用模型失败：{str(e)}"})
+            return
 
-    history.append({"role": "user", "content": user_message})
-    history.append({"role": "assistant", "content": reply})
+        if not full_reply:
+            yield sse({"error": "模型没有返回内容"})
+            return
 
-    if len(history) > MAX_HISTORY_MESSAGES:
-        history = history[-MAX_HISTORY_MESSAGES:]
+        try:
+            new_history = list(history) + [
+                {"role": "user", "content": user_message},
+                {"role": "assistant", "content": full_reply},
+            ]
+            if len(new_history) > MAX_HISTORY_MESSAGES:
+                new_history = new_history[-MAX_HISTORY_MESSAGES:]
+            save_history(new_history)
+        except Exception as e:
+            yield sse({"warning": f"保存历史失败：{str(e)}"})
 
-    save_history(history)
+        yield sse({"done": True})
 
-    return jsonify({"reply": reply})
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
 
 
 @app.route("/reload_prompt", methods=["POST"])
@@ -126,4 +158,4 @@ def reload_prompt():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True, threaded=True)

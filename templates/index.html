@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI 对话</title>
+  <title>高中化学实验室安全助手</title>
 
   <style>
     * {
@@ -297,6 +297,26 @@
       row.appendChild(bubble);
       chatBody.appendChild(row);
       scrollToBottom();
+      return bubble;
+    }
+
+    function createAiBubble() {
+      const row = document.createElement('div');
+      row.className = 'msg-row from-ai';
+
+      const avatar = document.createElement('div');
+      avatar.className = 'avatar ai';
+      avatar.textContent = 'AI';
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.textContent = '';
+
+      row.appendChild(avatar);
+      row.appendChild(bubble);
+      chatBody.appendChild(row);
+      scrollToBottom();
+      return bubble;
     }
 
     function showTyping() {
@@ -350,6 +370,18 @@
       }
     }
 
+    function parseSseChunk(raw) {
+      const events = [];
+      const line = raw.split('\n').find(l => l.startsWith('data:'));
+      if (!line) return events;
+      const payload = line.slice(5).trim();
+      if (!payload) return events;
+      try {
+        events.push(JSON.parse(payload));
+      } catch (_) {}
+      return events;
+    }
+
     async function sendMessage() {
       const text = inputEl.value.trim();
       if (!text) return;
@@ -362,19 +394,84 @@
       appendMessage('user', text);
       const typingRow = showTyping();
 
+      let bubble = null;
+      let replyText = '';
+
       try {
         const res = await fetch('/chat', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'text/event-stream',
+          },
           body: JSON.stringify({ message: text }),
         });
-        const data = await res.json();
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          typingRow.remove();
+          showError(data.error || ('请求失败：HTTP ' + res.status));
+          return;
+        }
+
+        if (!res.body) {
+          typingRow.remove();
+          showError('当前浏览器不支持流式响应');
+          return;
+        }
+
+        const reader  = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+        let finished = false;
+
+        while (!finished) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+
+          let idx;
+          while ((idx = buffer.indexOf('\n\n')) !== -1) {
+            const raw = buffer.slice(0, idx);
+            buffer = buffer.slice(idx + 2);
+
+            for (const evt of parseSseChunk(raw)) {
+              if (evt.error) {
+                typingRow.remove();
+                if (bubble) bubble.textContent = replyText || '（无回复）';
+                showError(evt.error);
+                finished = true;
+                break;
+              }
+
+              if (evt.warning) {
+                showError(evt.warning);
+              }
+
+              if (evt.delta) {
+                if (!bubble) {
+                  typingRow.remove();
+                  bubble = createAiBubble();
+                }
+                replyText += evt.delta;
+                bubble.textContent = replyText;
+                scrollToBottom();
+              }
+
+              if (evt.done) {
+                finished = true;
+                break;
+              }
+            }
+            if (finished) break;
+          }
+        }
+
         typingRow.remove();
 
-        if (res.ok && data.reply) {
-          appendMessage('ai', data.reply);
-        } else {
-          showError(data.error || '请求失败，请稍后重试');
+        if (!bubble && !finished) {
+          showError('未收到回复');
         }
       } catch (err) {
         typingRow.remove();
