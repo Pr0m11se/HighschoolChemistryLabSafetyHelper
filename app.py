@@ -6,7 +6,7 @@ from openai import OpenAI
 app = Flask(__name__)
 
 client = OpenAI(
-    api_key=os.environ.get("DEEPSEEK_API_KEY", "***REMOVED***"),
+    api_key=os.environ.get("DEEPSEEK_API_KEY", "apikey"),
     base_url="https://api.deepseek.com",
 )
 
