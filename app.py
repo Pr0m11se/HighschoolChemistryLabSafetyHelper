@@ -10,13 +10,41 @@ client = OpenAI(
     base_url="https://api.deepseek.com",
 )
 
-SYSTEM_PROMPT = "You are a helpful assistant"
-
-HISTORY_FILE = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "history.json"
-)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+HISTORY_FILE = os.path.join(BASE_DIR, "history.json")
+PROMPT_FILE = os.path.join(BASE_DIR, "tishici.json")
 
 MAX_HISTORY_MESSAGES = 20
+
+
+def _as_prompt(value):
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, list):
+        return "\n".join(v.strip() for v in value if isinstance(v, str) and v.strip())
+    return ""
+
+
+def load_system_prompt():
+    default_prompt = "You are a helpful assistant"
+    if not os.path.exists(PROMPT_FILE):
+        print("[WARN] 未找到 tishici.json，使用默认提示词")
+        return default_prompt
+    try:
+        with open(PROMPT_FILE, "r", encoding="utf-8-sig") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        print("[WARN] 读取 tishici.json 失败:", e)
+        return default_prompt
+
+    if isinstance(data, dict):
+        text = _as_prompt(data.get("system_prompt"))
+        return text or default_prompt
+
+    return _as_prompt(data) or default_prompt
+
+
+SYSTEM_PROMPT = load_system_prompt()
 
 
 def load_history():
@@ -79,7 +107,7 @@ def chat():
     except Exception as e:
         return jsonify({"error": f"调用模型失败：{str(e)}"}), 500
 
-    history.append({"role": "user",      "content": user_message})
+    history.append({"role": "user", "content": user_message})
     history.append({"role": "assistant", "content": reply})
 
     if len(history) > MAX_HISTORY_MESSAGES:
@@ -88,6 +116,13 @@ def chat():
     save_history(history)
 
     return jsonify({"reply": reply})
+
+
+@app.route("/reload_prompt", methods=["POST"])
+def reload_prompt():
+    global SYSTEM_PROMPT
+    SYSTEM_PROMPT = load_system_prompt()
+    return jsonify({"ok": True, "prompt": SYSTEM_PROMPT})
 
 
 if __name__ == "__main__":
