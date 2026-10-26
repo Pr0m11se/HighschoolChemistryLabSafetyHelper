@@ -12,7 +12,7 @@ def import_env():
     value = value_entry.get().strip()
 
     if not name or not value:
-        messagebox.showwarning("提示", "变量名和值都不能为空")
+        messagebox.showwarning("提示", "变量名和值都不能为空 ")
         return
 
     try:

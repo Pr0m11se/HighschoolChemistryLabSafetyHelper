@@ -106,7 +106,7 @@ def chat():
             stream = client.chat.completions.create(
                 model="deepseek-flash",
                 messages=messages,
-                max_tokens=2048,
+                max_tokens=2050,
                 temperature=0.85,
                 stream=True,
             )
