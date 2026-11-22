@@ -7,6 +7,7 @@
 
 import ctypes
 import os
+import threading
 import tkinter as tk
 import winreg
 from tkinter import messagebox
@@ -14,16 +15,28 @@ from tkinter import messagebox
 DEFAULT_NAME = "DEEPSEEK_API_KEY"
 HWND_BROADCAST = 0xFFFF
 WM_SETTINGCHANGE = 0x001A
+SMTO_BLOCK = 0x0001
+SMTO_ABORTIFHUNG = 0x0002
 
 
-def broadcast_env_change():
-    """通知资源管理器等已运行程序刷新环境变量。"""
+def broadcast_env_change(timeout_ms=800):
+    """通知资源管理器等已运行程序刷新环境变量（尽力而为，失败也不影响写入结果）。
+
+    注意：这里必须用 SendMessageTimeoutW，不能用 SendMessageW。
+    SendMessageW 是同步的，会把消息逐个投递给系统里所有顶层窗口并等它们处理完，
+    只要有一个程序卡死不处理消息，本窗口就会一直“未响应”、后面的成功提示也弹不出来。
+    SendMessageTimeoutW 加了超时和 SMTO_ABORTIFHUNG，遇到无响应的窗口直接跳过。
+    """
     try:
-        ctypes.windll.user32.SendMessageW(
+        result = ctypes.c_size_t(0)
+        ctypes.windll.user32.SendMessageTimeoutW(
             ctypes.c_void_p(HWND_BROADCAST),
             ctypes.c_uint(WM_SETTINGCHANGE),
             0,
             ctypes.c_wchar_p("Environment"),
+            SMTO_ABORTIFHUNG | SMTO_BLOCK,
+            ctypes.c_uint(timeout_ms),
+            ctypes.byref(result),
         )
     except Exception:
         pass
@@ -54,16 +67,20 @@ def import_env(name_entry, value_entry):
 
         # 让当前进程也立即生效（可选，方便调试）
         os.environ[name] = value
-        broadcast_env_change()
-
-        messagebox.showinfo(
-            "成功",
-            f"已写入环境变量 {name}\n\n"
-            "请关闭已打开的程序（含本窗口和命令行），重新双击「启动.bat」后生效。",
-        )
-        value_entry.delete(0, tk.END)
     except Exception as e:
         messagebox.showerror("失败", f"写入失败：{e}")
+        return
+
+    # 先给用户明确反馈，再去广播环境变量，避免广播卡住时看起来“没有任何提示”
+    value_entry.delete(0, tk.END)
+    messagebox.showinfo(
+        "成功",
+        f"已写入环境变量 {name}\n\n"
+        "请关闭已打开的程序（含本窗口和命令行），重新双击「启动.bat」后生效。",
+    )
+
+    # 广播放到后台线程里做，即使个别程序无响应也不会拖住 Tk 主循环
+    threading.Thread(target=broadcast_env_change, daemon=True).start()
 
 
 def main():
