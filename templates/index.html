@@ -6,11 +6,7 @@
   <title>高中化学实验室安全助手</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       min-height: 100vh;
@@ -26,7 +22,7 @@
 
     .chat-card {
       width: 100%;
-      max-width: 720px;
+      max-width: 760px;
       height: 94vh;
       max-height: 1000px;
       display: flex;
@@ -41,27 +37,23 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 16px;
+      gap: 12px;
+      padding: 14px 16px;
       border-bottom: 1px solid #eef0f4;
       font-weight: 600;
       font-size: 16px;
       flex-shrink: 0;
     }
 
-    .header-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .header-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .header-title span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #22c55e;
-    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; flex-shrink: 0; }
+    .dot.ok { background: #22c55e; }
 
-    #clear-btn {
+    .header-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    .hdr-btn {
       background: transparent;
       border: 1px solid #e5e7eb;
       color: #6b7280;
@@ -73,16 +65,9 @@
       transition: all 0.2s;
     }
 
-    #clear-btn:hover:not(:disabled) {
-      border-color: #fca5a5;
-      color: #dc2626;
-      background: #fef2f2;
-    }
-
-    #clear-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    .hdr-btn:hover:not(:disabled) { border-color: #c7d2fe; color: #4f46e5; background: #eef2ff; }
+    #clear-btn:hover:not(:disabled) { border-color: #fca5a5; color: #dc2626; background: #fef2f2; }
+    .hdr-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .chat-body {
       flex: 1;
@@ -96,39 +81,20 @@
       scroll-behavior: smooth;
     }
 
-    .msg-row {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-    }
-
-    .msg-row.from-user {
-      justify-content: flex-end;
-    }
-
-    .msg-row.from-user .avatar {
-      order: 1;
-    }
+    .msg-row { display: flex; gap: 10px; align-items: flex-start; }
+    .msg-row.from-user { justify-content: flex-end; }
+    .msg-row.from-user .avatar { order: 1; }
 
     .avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 700;
-      color: #fff;
-      user-select: none;
+      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: #fff; user-select: none;
     }
-
     .avatar.ai   { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
     .avatar.user { background: linear-gradient(135deg, #64748b, #94a3b8); }
 
     .bubble {
-      max-width: 75%;
+      max-width: 78%;
       padding: 10px 14px;
       border-radius: 14px;
       font-size: 14px;
@@ -136,33 +102,14 @@
       white-space: pre-wrap;
       word-break: break-word;
     }
+    .from-ai .bubble { background: #f3f4f6; color: #111827; border-bottom-left-radius: 4px; }
+    .from-user .bubble { background: #4f46e5; color: #fff; border-bottom-right-radius: 4px; }
 
-    .from-ai .bubble {
-      background: #f3f4f6;
-      color: #111827;
-      border-bottom-left-radius: 4px;
-    }
-
-    .from-user .bubble {
-      background: #4f46e5;
-      color: #fff;
-      border-bottom-right-radius: 4px;
-    }
-
-    .typing {
-      display: flex;
-      gap: 4px;
-      padding: 12px 14px;
-    }
-
+    .typing { display: flex; gap: 4px; padding: 12px 14px; }
     .typing span {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #9ca3af;
+      width: 6px; height: 6px; border-radius: 50%; background: #9ca3af;
       animation: blink 1.2s infinite ease-in-out;
     }
-
     .typing span:nth-child(2) { animation-delay: 0.2s; }
     .typing span:nth-child(3) { animation-delay: 0.4s; }
 
@@ -172,46 +119,25 @@
     }
 
     .chat-footer {
-      display: flex;
-      gap: 10px;
-      padding: 14px 16px;
-      border-top: 1px solid #eef0f4;
-      flex-shrink: 0;
+      display: flex; gap: 10px; padding: 14px 16px;
+      border-top: 1px solid #eef0f4; flex-shrink: 0;
     }
 
     #user-input {
-      flex: 1;
-      min-height: 44px;
-      max-height: 120px;
-      padding: 12px 14px;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      font-size: 14px;
-      line-height: 1.5;
-      font-family: inherit;
-      resize: none;
-      outline: none;
+      flex: 1; min-height: 44px; max-height: 120px;
+      padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 12px;
+      font-size: 14px; line-height: 1.5; font-family: inherit;
+      resize: none; outline: none;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
-
-    #user-input:focus {
-      border-color: #6366f1;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-    }
+    #user-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15); }
 
     #send-btn {
-      padding: 0 20px;
-      border: none;
-      border-radius: 12px;
-      background: #4f46e5;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 600;
-      font-family: inherit;
-      cursor: pointer;
+      padding: 0 20px; border: none; border-radius: 12px;
+      background: #4f46e5; color: #fff; font-size: 14px; font-weight: 600;
+      font-family: inherit; cursor: pointer;
       transition: background 0.2s, transform 0.1s;
     }
-
     #send-btn:hover:not(:disabled)  { background: #4338ca; }
     #send-btn:active:not(:disabled) { transform: scale(0.97); }
     #send-btn:disabled { background: #c7d2fe; cursor: not-allowed; }
@@ -224,23 +150,46 @@
       padding: 6px 14px;
       border-radius: 999px;
       font-size: 12px;
+      max-width: 90%;
+      text-align: center;
     }
 
     .chat-body::-webkit-scrollbar { width: 6px; }
-    .chat-body::-webkit-scrollbar-thumb {
-      background: #d1d5db;
-      border-radius: 3px;
-    }
+    .chat-body::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
     .chat-body::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+    /* 设置密钥弹窗 */
+    .mask {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
+      display: none; align-items: center; justify-content: center; z-index: 20;
+    }
+    .mask.show { display: flex; }
+    .dialog {
+      width: min(420px, 92vw); background: #fff; border-radius: 14px;
+      padding: 20px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    }
+    .dialog h3 { font-size: 15px; margin-bottom: 6px; }
+    .dialog p { font-size: 12px; color: #6b7280; line-height: 1.6; margin-bottom: 12px; }
+    .dialog input {
+      width: 100%; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 10px;
+      font-size: 13px; font-family: inherit; outline: none;
+    }
+    .dialog input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15); }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+    .dialog-actions button {
+      padding: 8px 16px; border-radius: 10px; font-size: 13px; font-family: inherit; cursor: pointer;
+    }
+    .btn-ghost { background: #fff; border: 1px solid #e5e7eb; color: #6b7280; }
+    .btn-main { background: #4f46e5; border: 1px solid #4f46e5; color: #fff; }
+    .dialog-tip { font-size: 12px; margin-top: 10px; min-height: 16px; }
+    .dialog-tip.err { color: #dc2626; }
+    .dialog-tip.ok  { color: #16a34a; }
 
     @media (max-width: 600px) {
       body { padding: 0; }
-      .chat-card {
-        height: 100vh;
-        max-height: none;
-        border-radius: 0;
-      }
+      .chat-card { height: 100vh; max-height: none; border-radius: 0; }
       .bubble { max-width: 85%; }
+      .header-title span:last-child { font-size: 14px; }
     }
   </style>
 </head>
@@ -251,10 +200,13 @@
 
     <div class="chat-header">
       <div class="header-title">
-        <span class="dot"></span>
+        <span class="dot" id="status-dot"></span>
         <span>高中化学实验室安全助手</span>
       </div>
-      <button id="clear-btn" title="清空所有历史对话">清空对话</button>
+      <div class="header-actions">
+        <button id="key-btn" class="hdr-btn" title="设置 DeepSeek API Key">设置密钥</button>
+        <button id="clear-btn" class="hdr-btn" title="清空所有历史对话">清空对话</button>
+      </div>
     </div>
 
     <div class="chat-body" id="chat-body"></div>
@@ -269,16 +221,34 @@
 
   </div>
 
+  <div class="mask" id="key-mask">
+    <div class="dialog">
+      <h3>设置 DeepSeek API Key</h3>
+      <p>密钥保存在本程序目录的 .env 文件中，仅本机可用。可到 platform.deepseek.com 创建，形如 sk-xxxxxxxx。</p>
+      <input id="key-input" type="password" placeholder="粘贴 sk- 开头的 API Key" />
+      <div class="dialog-tip" id="key-tip"></div>
+      <div class="dialog-actions">
+        <button class="btn-ghost" id="key-cancel">取消</button>
+        <button class="btn-main" id="key-save">保存</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const chatBody = document.getElementById('chat-body');
-    const inputEl  = document.getElementById('user-input');
-    const sendBtn  = document.getElementById('send-btn');
-    const clearBtn = document.getElementById('clear-btn');
+    const chatBody  = document.getElementById('chat-body');
+    const inputEl   = document.getElementById('user-input');
+    const sendBtn   = document.getElementById('send-btn');
+    const clearBtn  = document.getElementById('clear-btn');
+    const keyBtn    = document.getElementById('key-btn');
+    const statusDot = document.getElementById('status-dot');
+    const keyMask   = document.getElementById('key-mask');
+    const keyInput  = document.getElementById('key-input');
+    const keyTip    = document.getElementById('key-tip');
+
+    const GREETING = '你好，我是高中化学实验室安全助手。\n可以问我：某种试剂怎么存放、两类药品能不能混放、皮肤或眼睛沾到了怎么办。\n紧急情况请先冲洗并立刻找老师，不要只依赖我\n如果你是老人，就告诉我，我会用更简单更浅显易懂的方式给你讲';
 
     function scrollToBottom() {
-      requestAnimationFrame(() => {
-        chatBody.scrollTop = chatBody.scrollHeight;
-      });
+      requestAnimationFrame(() => { chatBody.scrollTop = chatBody.scrollHeight; });
     }
 
     function appendMessage(role, text) {
@@ -310,7 +280,6 @@
 
       const bubble = document.createElement('div');
       bubble.className = 'bubble';
-      bubble.textContent = '';
 
       row.appendChild(avatar);
       row.appendChild(bubble);
@@ -338,13 +307,21 @@
       return row;
     }
 
-    function showError(message) {
+    let keyWarningTip = null;
+
+    function showError(message, keep) {
       const tip = document.createElement('div');
       tip.className = 'error-tip';
       tip.textContent = message;
       chatBody.appendChild(tip);
       scrollToBottom();
-      setTimeout(() => tip.remove(), 3000);
+      if (keep === true) return tip;
+      setTimeout(() => tip.remove(), 4000);
+      return tip;
+    }
+
+    function clearKeyWarning() {
+      if (keyWarningTip) { keyWarningTip.remove(); keyWarningTip = null; }
     }
 
     async function loadHistory() {
@@ -353,32 +330,74 @@
         const data = await res.json();
         const messages = data.messages || [];
 
-        if (messages.length === 0) {
-          appendMessage('ai', '你好！有什么可以帮你的吗?');
-          return;
-        }
+        if (messages.length === 0) { appendMessage('ai', GREETING); return; }
 
         messages.forEach(m => {
-          if (m.role === 'assistant') {
-            appendMessage('ai', m.content);
-          } else if (m.role === 'user') {
-            appendMessage('user', m.content);
-          }
+          if (m.role === 'assistant') appendMessage('ai', m.content);
+          else if (m.role === 'user') appendMessage('user', m.content);
         });
       } catch (err) {
         showError('加载历史失败：' + err.message);
       }
     }
 
+    async function checkHealth() {
+      try {
+        const res  = await fetch('/health');
+        const data = await res.json();
+        if (data.api_key_configured) {
+          statusDot.classList.add('ok');
+        } else {
+          statusDot.classList.remove('ok');
+          keyWarningTip = showError('尚未配置 DeepSeek API Key，请点击右上角「设置密钥」。', true);
+        }
+      } catch (_) { /* 忽略 */ }
+    }
+
+    function openKeyDialog() {
+      keyTip.textContent = '';
+      keyTip.className = 'dialog-tip';
+      keyMask.classList.add('show');
+      keyInput.value = '';
+      setTimeout(() => keyInput.focus(), 50);
+    }
+
+    function closeKeyDialog() { keyMask.classList.remove('show'); }
+
+    async function saveKey() {
+      const key = keyInput.value.trim();
+      if (!key) { keyTip.textContent = '请先粘贴 API Key'; keyTip.className = 'dialog-tip err'; return; }
+
+      keyTip.textContent = '保存中…';
+      keyTip.className = 'dialog-tip';
+      try {
+        const res = await fetch('/api/key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.ok) throw new Error(data.error || ('HTTP ' + res.status));
+
+        keyTip.textContent = '已保存，可以开始提问了';
+        keyTip.className = 'dialog-tip ok';
+        statusDot.classList.add('ok');
+        clearKeyWarning();
+        setTimeout(closeKeyDialog, 900);
+      } catch (err) {
+        keyTip.textContent = '保存失败：' + err.message;
+        keyTip.className = 'dialog-tip err';
+      }
+    }
+
     function parseSseChunk(raw) {
       const events = [];
-      const line = raw.split('\n').find(l => l.startsWith('data:'));
-      if (!line) return events;
-      const payload = line.slice(5).trim();
-      if (!payload) return events;
-      try {
-        events.push(JSON.parse(payload));
-      } catch (_) {}
+      raw.split('\n').forEach(line => {
+        if (!line.startsWith('data:')) return;
+        const payload = line.slice(5).trim();
+        if (!payload) return;
+        try { events.push(JSON.parse(payload)); } catch (_) { /* 不完整，丢弃 */ }
+      });
       return events;
     }
 
@@ -396,6 +415,7 @@
 
       let bubble = null;
       let replyText = '';
+      let finished = false;
 
       try {
         const res = await fetch('/chat', {
@@ -410,20 +430,20 @@
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
           typingRow.remove();
-          showError(data.error || ('请求失败：HTTP ' + res.status));
+          showError(data.error || ('请求失败：HTTP ' + res.status), true);
+          if (data.need_key) openKeyDialog();
           return;
         }
 
         if (!res.body) {
           typingRow.remove();
-          showError('当前浏览器不支持流式响应');
+          showError('当前浏览器不支持流式响应，请用 Chrome 或 Edge 打开。');
           return;
         }
 
         const reader  = res.body.getReader();
         const decoder = new TextDecoder('utf-8');
         let buffer = '';
-        let finished = false;
 
         while (!finished) {
           const { done, value } = await reader.read();
@@ -440,39 +460,29 @@
               if (evt.error) {
                 typingRow.remove();
                 if (bubble) bubble.textContent = replyText || '（无回复）';
-                showError(evt.error);
+                showError(evt.error, true);
                 finished = true;
                 break;
               }
-
-              if (evt.warning) {
-                showError(evt.warning);
-              }
-
+              if (evt.warning) showError(evt.warning);
               if (evt.delta) {
                 if (!bubble) {
                   typingRow.remove();
                   bubble = createAiBubble();
+                  clearKeyWarning();
                 }
                 replyText += evt.delta;
                 bubble.textContent = replyText;
                 scrollToBottom();
               }
-
-              if (evt.done) {
-                finished = true;
-                break;
-              }
+              if (evt.done) { finished = true; break; }
             }
             if (finished) break;
           }
         }
 
         typingRow.remove();
-
-        if (!bubble && !finished) {
-          showError('未收到回复');
-        }
+        if (!bubble && !finished) showError('未收到回复，请稍后重试。');
       } catch (err) {
         typingRow.remove();
         showError('网络错误：' + err.message);
@@ -502,6 +512,11 @@
 
     sendBtn.addEventListener('click', sendMessage);
     clearBtn.addEventListener('click', clearHistory);
+    keyBtn.addEventListener('click', openKeyDialog);
+    document.getElementById('key-cancel').addEventListener('click', closeKeyDialog);
+    document.getElementById('key-save').addEventListener('click', saveKey);
+    keyInput.addEventListener('keydown', e => { if (e.key === 'Enter') saveKey(); });
+    keyMask.addEventListener('click', e => { if (e.target === keyMask) closeKeyDialog(); });
 
     inputEl.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -516,7 +531,7 @@
     });
 
     (async function init() {
-      await loadHistory();
+      await Promise.all([loadHistory(), checkHealth()]);
       inputEl.focus();
     })();
   </script>
